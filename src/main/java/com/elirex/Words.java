@@ -62,7 +62,7 @@ public class Words {
         private int end;
 
         public Position(int begin, int end) {
-            this.begin = begin;
+            this.begin = begin + 1;
             this.end = end;
         }
 

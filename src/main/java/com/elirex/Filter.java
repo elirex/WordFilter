@@ -1,5 +1,6 @@
 package com.elirex;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,9 +52,9 @@ public class Filter {
         replace = str;
     }
 
-    private Words filter(String str, int matchType) {
+    public Words filter(String str, int matchType) {
+        wordPoolMap = filterWordsPool.getWordPoolMap();
         Words words = new Words(str);
-        String replaceStr = str;
         int length = str.length();
         for(int i = 0; i < length; i++) {
             int matchLength = searchWordPool(str, i, matchType);
@@ -70,18 +71,20 @@ public class Filter {
     public Words replace(Words words, String replaceWord) {
         Words resultWords = words;
         HashMap<String, ArrayList<Words.Position>> matchWords = resultWords.getMatchWords();
-        String resultStr = resultWords.getOrignalString();
-        String replaceWords = null;
-        for(String word : matchWords.keySet()) {
-            replaceWords = getReplaceWord(replaceWord, word.length());
-            resultStr = resultStr.replaceAll(word, replaceWords);
+        if(matchWords != null && matchWords.size() >= 0) {
+            String resultStr = resultWords.getOrignalString();
+            String replaceWords = null;
+            for (String word : matchWords.keySet()) {
+                replaceWords = getReplaceWord(replaceWord, word.length());
+                resultStr = resultStr.replaceAll(word, replaceWords);
+            }
+            resultWords.setReplaceString(resultStr);
         }
-        resultWords.setReplaceString(resultStr);
         return resultWords;
     }
 
     private String getReplaceWord(String replaceWord, int lenght) {
-        String replaceWords = replaceWord;
+        String replaceWords = "";
         for(int i = 0; i < lenght; i++) {
             replaceWords += replaceWord;
         }
@@ -92,11 +95,16 @@ public class Filter {
         boolean flag = false;
         int matchlength = 0;
         Map currentMap = wordPoolMap;
+        Map preMap = null;
         int length = str.length();
+        int index = 0;
         for(int i = beginIndex; i < length; i++) {
             char keyChar = str.charAt(i);
-            currentMap = (Map) currentMap.get(keyChar);
-            if(currentMap != null) {
+            // currentMap = (Map) currentMap.get(keyChar);
+            if(currentMap.get(keyChar) != null) {
+            // if(currentMap != null) {
+                preMap = currentMap;
+                currentMap = (Map) currentMap.get(keyChar);
                 matchlength++;
                 if("1".equals(currentMap.get("isEnd"))) {
                     flag = true;
@@ -104,11 +112,29 @@ public class Filter {
                         break;
                     }
                 }
+                index = i;
             } else {
-                break;
+                if(preMap != null && preMap.get(keyChar) != null) {
+                    matchlength++;
+                    currentMap = preMap;
+                } else {
+                    break;
+                }
             }
         }
-        if(matchlength < 2 || !flag) {
+        if(matchlength < 2 && flag) {
+            if(str.length() > 1) {
+                if(beginIndex > 0) {
+                    char preChar = str.charAt(index -1);
+                    char nextChar = str.charAt(index + 1);
+                    boolean pre = preChar != 0 || preChar != ' ' || preChar != '\n';
+                    boolean next = nextChar != 0 || nextChar != ' ' || nextChar != '\n';
+                    if(pre && next) {
+                        matchlength = 0;
+                    }
+                }
+            }
+        } else {
             matchlength = 0;
         }
         return matchlength;

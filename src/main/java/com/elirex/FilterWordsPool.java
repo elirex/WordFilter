@@ -138,7 +138,7 @@ class FilterWordsPool {
                 } else {
                     newMap = new HashMap<String, String>();
                     newMap.put("isEnd", "0");
-                    currentMap.put(keyChar, currentMap);
+                    currentMap.put(keyChar, newMap);
                     currentMap = newMap;
                 }
 
