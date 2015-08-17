@@ -1,6 +1,8 @@
 package com.elirex;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -13,32 +15,86 @@ public class Filter {
     public static final int TYPE_MIN_MATCH = 1;
     public static final int TYPE_MAX_MATCH = 2;
 
-    private WordPool wordPool = null;
+    private FilterWordsPool filterWordsPool = null;
     private Map wordPoolMap;
+    private String replace = "*";
 
     public Filter() {
-        wordPool = WordPool.initWordPool();
+        filterWordsPool = FilterWordsPool.initWordPool();
     }
 
     public Filter(String... words) {
-        wordPool = WordPool.initWordPool(words);
+        filterWordsPool = FilterWordsPool.initWordPool(words);
     }
 
     public Filter(File... files) {
-        wordPool = WordPool.initWordPool(files);
+        filterWordsPool = FilterWordsPool.initWordPool(files);
     }
 
     public int getTotalWords() {
-        return wordPool.getTotalWords();
+        return filterWordsPool.getTotalWords();
     }
 
-    private int searchWordPool(String txt, int beginIndex, int matchType) {
+    public void addWords(String... words) {
+        filterWordsPool.addWords(words);
+    }
+
+    public void addWordsFromFile(File... files) {
+        filterWordsPool.addWordsFromFile(files);
+    }
+
+    /**
+     * Sets replace word (Default is "*").
+     * @param str
+     */
+    public void setReplace(String str) {
+        replace = str;
+    }
+
+    private Words filter(String str, int matchType) {
+        Words words = new Words(str);
+        String replaceStr = str;
+        int length = str.length();
+        for(int i = 0; i < length; i++) {
+            int matchLength = searchWordPool(str, i, matchType);
+            if(matchLength > 0) {
+                words.setHasFilterWord(true);
+                words.addMatchWord(str.substring(i, i + matchLength), i, i + matchLength);
+                i = i + matchLength - 1;
+            }
+        }
+        words = replace(words, replace);
+        return words;
+    }
+
+    public Words replace(Words words, String replaceWord) {
+        Words resultWords = words;
+        HashMap<String, ArrayList<Words.Position>> matchWords = resultWords.getMatchWords();
+        String resultStr = resultWords.getOrignalString();
+        String replaceWords = null;
+        for(String word : matchWords.keySet()) {
+            replaceWords = getReplaceWord(replaceWord, word.length());
+            resultStr = resultStr.replaceAll(word, replaceWords);
+        }
+        resultWords.setReplaceString(resultStr);
+        return resultWords;
+    }
+
+    private String getReplaceWord(String replaceWord, int lenght) {
+        String replaceWords = replaceWord;
+        for(int i = 0; i < lenght; i++) {
+            replaceWords += replaceWord;
+        }
+        return replaceWords;
+    }
+
+    private int searchWordPool(String str, int beginIndex, int matchType) {
         boolean flag = false;
         int matchlength = 0;
         Map currentMap = wordPoolMap;
-        int length = txt.length();
+        int length = str.length();
         for(int i = beginIndex; i < length; i++) {
-            char keyChar = txt.charAt(i);
+            char keyChar = str.charAt(i);
             currentMap = (Map) currentMap.get(keyChar);
             if(currentMap != null) {
                 matchlength++;
