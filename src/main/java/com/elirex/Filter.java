@@ -1,5 +1,7 @@
 package com.elirex;
 
+import javafx.geometry.Pos;
+
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
@@ -75,8 +77,9 @@ public class Filter {
             String resultStr = resultWords.getOrignalString();
             String replaceWords = null;
             for (String word : matchWords.keySet()) {
-                replaceWords = getReplaceWord(replaceWord, word.length());
-                resultStr = resultStr.replaceAll(word, replaceWords);
+                // replaceWords = getReplaceWord(replaceWord, word.length());
+                // resultStr = resultStr.replaceAll(word, replaceWords);
+                resultStr = replaceString(resultStr, replaceWord, word, matchWords.get(word));
             }
             resultWords.setReplaceString(resultStr);
         }
@@ -89,6 +92,20 @@ public class Filter {
             replaceWords += replaceWord;
         }
         return replaceWords;
+    }
+
+    private String replaceString(String originalString, String replaceWord,
+                                String word, ArrayList<Words.Position> positions) {
+        String replaceWords = "";
+        StringBuilder resultString = new StringBuilder(originalString);
+        int length = word.length();
+        for(int i = 0; i < length; i++) {
+            replaceWords += replaceWord;
+        }
+        for(Words.Position pos : positions) {
+            resultString = resultString.replace(pos.begin()-1, pos.end(), replaceWord);
+        }
+        return resultString.toString();
     }
 
     private int searchWordPool(String str, int beginIndex, int matchType) {
@@ -115,8 +132,16 @@ public class Filter {
                 index = i;
             } else {
                 if(preMap != null && preMap.get(keyChar) != null) {
-                    matchlength++;
-                    currentMap = preMap;
+                    char preChar = str.charAt(i -1);
+                    char nextChar = str.charAt(i + 1);
+                    boolean pre = preChar != 0 && preChar != ' ' && preChar != '\n';
+                    boolean next = nextChar != 0 && nextChar != ' ' && nextChar != '\n';
+                    if(pre || next) {
+                        break;
+                    } else {
+                        matchlength++;
+                        currentMap = preMap;
+                    }
                 } else {
                     break;
                 }
@@ -127,14 +152,20 @@ public class Filter {
                 if(beginIndex > 0) {
                     char preChar = str.charAt(index -1);
                     char nextChar = str.charAt(index + 1);
-                    boolean pre = preChar != 0 || preChar != ' ' || preChar != '\n';
-                    boolean next = nextChar != 0 || nextChar != ' ' || nextChar != '\n';
-                    if(pre && next) {
+                    boolean pre = preChar != 0 && preChar != ' ' && preChar != '\n';
+                    boolean next = nextChar != 0 && nextChar != ' ' && nextChar != '\n';
+                    if((pre || next) && str.charAt(index) != nextChar) {
+                        matchlength = 0;
+                    }
+                } else {
+                    char nextChar = str.charAt(index + 1);
+                    boolean next = nextChar != 0 &&  nextChar != ' ' && nextChar != '\n';
+                    if(next && str.charAt(index) != nextChar) {
                         matchlength = 0;
                     }
                 }
             }
-        } else {
+        } else if(matchlength < 2 && !flag){
             matchlength = 0;
         }
         return matchlength;
