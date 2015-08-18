@@ -103,7 +103,7 @@ public class Filter {
             replaceWords += replaceWord;
         }
         for(Words.Position pos : positions) {
-            resultString = resultString.replace(pos.begin()-1, pos.end(), replaceWord);
+            resultString = resultString.replace(pos.begin()-1, pos.end(), replaceWords);
         }
         return resultString.toString();
     }
@@ -117,9 +117,7 @@ public class Filter {
         int index = 0;
         for(int i = beginIndex; i < length; i++) {
             char keyChar = str.charAt(i);
-            // currentMap = (Map) currentMap.get(keyChar);
             if(currentMap.get(keyChar) != null) {
-            // if(currentMap != null) {
                 preMap = currentMap;
                 currentMap = (Map) currentMap.get(keyChar);
                 matchlength++;
